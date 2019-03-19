@@ -50,7 +50,7 @@ Options:
 
 ### Using Graphviz to draw generated DOT files
 
-After running ampliviz, it should produce four `.gv` files. These all describe
+After running ampliviz, it should produce five `.gv` files. These all describe
 the breakpoint graph at varying levels of detail. In particular:
   - `{output_prefix}_0.gv` describes the nodes and edges in the graph with
     minimal styling.
