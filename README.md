@@ -84,6 +84,14 @@ ccomps {output_prefix}_4.gv | grep -r "subgraph" | wc -l
 
 ### Caveats
 
+0. This isn't really a "caveat," per se, but the `Makefile` relies on you
+   having Graphviz (or at least dot) installed on your system, as well as some
+   sort of program called `open` that knows how to open images. If either or
+   both of these things are not installed, the Makefile will crash. (As
+   mentioned above, you can totally just run ampliviz by itself -- however, the
+   bulk of what it does is produce visualizations, so if you don't have dot
+   installed then it won't be very useful.)
+
 1. If your AA graph spans more than eight reference chromosomes, ampliviz will run
    out of colors to use for colorizing nodes (for `{output_prefix}_1.gv`, as
    mentioned above). You can fix this very easily by editing the `COLORS` list in
