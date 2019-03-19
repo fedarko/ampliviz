@@ -253,6 +253,12 @@ class BreakpointEdge(object):
 @click.option("-d", "--output-directory", required=False, help="Directory to "
               "write output files to. If not passed, files will be written to "
               "the current working directory.")
+@click.option("-sm", "--simulated-mean", required=False, default=5, type=float,
+              help="Mean of the normal distribution to use when simulating "
+              "edge support values.")
+@click.option("-ss", "--simulated-std-dev", required=False, default=5,
+              type=float, help="Standard deviation of the normal distribution "
+              "to use when simulating edge support values.")
 @click.option("-p", "--pacbio-bam", required=False, help="BAM file describing "
               "the alignment between PacBio long reads and the sequences in "
               "the breakpoint graph. If this is not passed, simulated edge "
@@ -260,6 +266,7 @@ class BreakpointEdge(object):
               "OPTION IS NOT SUPPORTED YET -- only simulated edge support "
               "values can be generated at present.")
 def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
+                  simulated_mean: float, simulated_std_dev: float,
                   pacbio_bam: str) -> None:
     with open(input_graph, 'r') as input_graph_file:
         on_first_line = True
@@ -433,7 +440,11 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
     else:
         edge_support_values = []
         for i in range(len(bp_edges_list)):
-            v = max(round(numpy.random.normal(loc=5, scale=5)), 0)
+            # The max(..., 0) is just a way of saying: if this edge gets
+            # assigned a support value of <= 0, just set it to 0.
+            v = max(round(numpy.random.normal(
+                loc=simulated_mean, scale=simulated_std_dev
+            )), 0)
             edge_support_values.append(v)
 
     with open(fn3, 'w') as out_file:
