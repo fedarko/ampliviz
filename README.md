@@ -60,8 +60,27 @@ the breakpoint graph at varying levels of detail. In particular:
     by their "type" (either concordant or discordant).
   - `{output_prefix}_3.gv` is like the previous graph, but the thicknesses of
     edges are altered based on randomly simulated "edge support" values. Edges
-    assigned a simulated support value of less than or equal to zero are removed
-    from the graph, which can simplify the display significantly.
+    assigned a simulated support value of less than or equal to zero do not
+    have their lines drawn, but their arrowhead is still drawn and the edge still
+    impacts the layout of the graph.
+  - `{output_prefix}_4.gv` is like the previous graph, but edges assigned a
+    simulated support value of less than or equal to zero are removed
+    from the graph, which can simplify the graph topology and resulting
+    visualization significantly.
+
+All of these files can be visualized in [Graphviz](https://www.graphviz.org/)
+using the "dot" layout program. If you use ampliviz' `Makefile` to generate
+these files, it will automatically try to lay them out as PNG images using dot
+(and then open the resulting images).
+
+### Determining the number of connected components in `{output_prefix}_4.gv`
+
+(This requires that Graphviz be installed, in order for its `ccomps` tool to be
+available.)
+
+```bash
+ccomps {output_prefix}_4.gv | grep -r "subgraph" | wc -l
+```
 
 ### Caveats
 

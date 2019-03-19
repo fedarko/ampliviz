@@ -230,7 +230,7 @@ class BreakpointEdge(object):
                 EDGE_TYPE2COLOR[self.edge_type]
             ))
         if pacbio:
-            attrs.append("penwidth={}".format(self.support_value + 1))
+            attrs.append("penwidth={}".format(self.support_value))
         attrs = str(attrs).replace("'", "")
         return "{}->{} {}".format(self.start_node.dot_repr(),
                                   self.end_node.dot_repr(), attrs)
@@ -338,7 +338,7 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
     bp_edges_list = list(bp_edges_no_src)
 
     def make_dot_graph(color_n=False, color_e=False, pacbio_e=False,
-                       esv=None):
+                       esv=None, split_edges=False):
         """Returns a str of DOT output for the breakpoint graph, with differing
            levels of detail based on the options passed.
 
@@ -362,6 +362,10 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
              this argument if you want to simulate the effect of PacBio reads
              on the graph visualization. If this is passed, pacbio_e should
              also be passed. (Passing esv but not pacbio_e does nothing.)
+
+        split_edges: If True, this will remove edges with a support value of
+                     <= 0 from the graph. (As with esv, this only does
+                     something if pacbio_e is passed.)
         """
         dot_output = "digraph bp_graph {\n\trankdir=\"LR\"\n"
         for n in seq_edges:
@@ -373,9 +377,10 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
                 # If the user passed in simulated support values, use them
                 if esv is not None:
                     e.support_value = esv[i]
-                # Regardless of if the support value is real or simulated,
-                # don't draw unsupported edges.
-                if e.support_value <= 0:
+                # Don't draw unsupported edges if split_edges is True.
+                # (If split_edges is False, these edges will still be
+                # incorporated in the layout process.)
+                if split_edges and e.support_value <= 0:
                     i += 1
                     continue
             edge_dot_str = e.dot_repr(color=color_e, pacbio=pacbio_e)
@@ -398,10 +403,12 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
     p1 = "{}_1.gv".format(output_prefix)
     p2 = "{}_2.gv".format(output_prefix)
     p3 = "{}_3.gv".format(output_prefix)
+    p4 = "{}_4.gv".format(output_prefix)
     fn0 = os.path.join(output_directory, p0)
     fn1 = os.path.join(output_directory, p1)
     fn2 = os.path.join(output_directory, p2)
     fn3 = os.path.join(output_directory, p3)
+    fn4 = os.path.join(output_directory, p4)
 
     # Create basic visualizations
     with open(fn0, 'w') as out_file:
@@ -433,6 +440,13 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
         out_file.write(make_dot_graph(color_n=True, color_e=True,
                                       pacbio_e=True, esv=edge_support_values))
     print('Graph with colorization and edge support ({}) created.'.format(p3))
+
+    with open(fn4, 'w') as out_file:
+        out_file.write(make_dot_graph(color_n=True, color_e=True,
+                                      pacbio_e=True, esv=edge_support_values,
+                                      split_edges=True))
+    print('Graph with colorization, edge support, and splitting ({}) '
+          'created.'.format(p4))
 
 
 if __name__ == '__main__':

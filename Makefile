@@ -14,4 +14,5 @@ all:
 	dot -Tpng $(OUTDIR)/$(OUTPREF)_1.gv > $(OUTDIR)/$(OUTPREF)_1.png
 	dot -Tpng $(OUTDIR)/$(OUTPREF)_2.gv > $(OUTDIR)/$(OUTPREF)_2.png
 	dot -Tpng $(OUTDIR)/$(OUTPREF)_3.gv > $(OUTDIR)/$(OUTPREF)_3.png
+	dot -Tpng $(OUTDIR)/$(OUTPREF)_4.gv > $(OUTDIR)/$(OUTPREF)_4.png
 	open $(OUTDIR)/$(OUTPREF)*.png
