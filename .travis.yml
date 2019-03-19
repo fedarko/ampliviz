@@ -1,0 +1,11 @@
+language: python
+python:
+    - "3.6"
+install:
+    - pip install click
+    - pip install numpy
+script:
+    - python3 -m doctest ampliviz.py
+    # TODO compare actual dot output graph files using sample ampliconarchitect
+    # graph (figure out which ones I'm clear to use)
+    - flake8 ampliviz.py
