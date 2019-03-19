@@ -7,5 +7,5 @@ install:
 script:
     - python3 -m doctest ampliviz.py
     # TODO compare actual dot output graph files using sample ampliconarchitect
-    # graph (figure out which ones I'm clear to use)
+    # graph (figure out which graphs I'm clear to use)
     - flake8 ampliviz.py
