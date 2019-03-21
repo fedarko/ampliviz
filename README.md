@@ -74,6 +74,7 @@ Options:
 
 After running ampliviz, it should produce five `.gv` files. These all describe
 the breakpoint graph at varying levels of detail. In particular:
+
   - `{output_prefix}_0.gv` describes the nodes and edges in the graph with
     minimal styling.
   - `{output_prefix}_1.gv` is like the previous graph, but nodes are colored
@@ -128,7 +129,8 @@ Thanks to Jens Luebeck, Nam-Phuong Nguyen, Mehrdad Baktiari, and Prof. Bafna
 for advice and help with getting started.
 
 This project relies on a number of Python libraries, including:
-    - [click](https://click.palletsprojects.com/en/7.x/)
-    - [flake8](http://flake8.pycqa.org/en/latest/) (just used on Travis)
-    - [numpy](http://www.numpy.org/)
-    - [pysam](https://github.com/pysam-developers/pysam/)
+
+  - [click](https://click.palletsprojects.com/en/7.x/)
+  - [flake8](http://flake8.pycqa.org/en/latest/) (used when testing with Travis-CI)
+  - [numpy](http://www.numpy.org/)
+  - [pysam](https://github.com/pysam-developers/pysam/)
