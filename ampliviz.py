@@ -16,10 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ###############################################################################
-import click
 import math
 import os
+import subprocess
 import numpy
+import click
+import use_pacbio_reads
 
 
 # These don't really correspond to anything in particular, they're just
@@ -262,12 +264,23 @@ class BreakpointEdge(object):
 @click.option("-p", "--pacbio-bam", required=False, help="BAM file describing "
               "the alignment between PacBio long reads and the sequences in "
               "the breakpoint graph. If this is not passed, simulated edge "
-              "support values will be generated and used. NOTE THAT THIS "
-              "OPTION IS NOT SUPPORTED YET -- only simulated edge support "
-              "values can be generated at present.")
+              "support values will be generated and used.")
+@click.option("-msv", "--max-support-value", required=False, default=30,
+              type=int, help="Maximum accepted edge support value. If any "
+              "edge support values (either real or simulated) exceed this "
+              "value, then every edge support value will be scaled to have "
+              "this value as a maximum. (This is done so that edge support "
+              "values can be used directly as values for Graphviz' "
+              "\"penwidth\" attribute.)")
+@click.option("-dot", "--draw-with-dot", is_flag=True,
+              help="If passed, will try to use dot to convert each DOT file "
+              "to a PNG drawing. This will crash if Graphviz isn't installed.")
 def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
                   simulated_mean: float, simulated_std_dev: float,
-                  pacbio_bam: str) -> None:
+                  pacbio_bam: str, max_support_value: int,
+                  draw_with_dot: bool) -> None:
+
+    print("==========Running ampliviz==========")
     with open(input_graph, 'r') as input_graph_file:
         on_first_line = True
         # Collections of relevant objects
@@ -362,13 +375,11 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
                   specified). Edges with a support_value of <= 0 will not be
                   drawn, since they are "unsupported" by the long read data.
 
-        esv: If passed, this should be a list of simulated "support" values
-             such that len(esv) >= len(bp_edges_list). This function will
-             overwrite the support_value attribute of each edge in
-             bp_edges_list with the corresponding value in esv. So only use
-             this argument if you want to simulate the effect of PacBio reads
-             on the graph visualization. If this is passed, pacbio_e should
-             also be passed. (Passing esv but not pacbio_e does nothing.)
+        esv: If passed, this should be a dict mapping edge objects to their
+             support values. This function will overwrite the support_value
+             attribute of each edge in bp_edges_list with the corresponding
+             value in esv. If this is passed, pacbio_e should also be passed.
+             (Passing esv but not pacbio_e does nothing.)
 
         split_edges: If True, this will remove edges with a support value of
                      <= 0 from the graph. (As with esv, this only does
@@ -383,7 +394,7 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
             if pacbio_e:
                 # If the user passed in simulated support values, use them
                 if esv is not None:
-                    e.support_value = esv[i]
+                    e.support_value = esv[e]
                 # Don't draw unsupported edges if split_edges is True.
                 # (If split_edges is False, these edges will still be
                 # incorporated in the layout process.)
@@ -430,22 +441,41 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
         out_file.write(make_dot_graph(color_n=True, color_e=True))
     print('Graph with colorized nodes and edges ({}) created.'.format(p2))
 
+    edge_support_values = {}
     if pacbio_bam is not None:
-        # Below code would be used for working with real long read data
-        # edge_support_values = read_pacbio_bam(pacbio_bam, bp_edges_list)
-        # for e in bp_edges_list:
-        #     e.support_value = edge_support_values[e]
-        #     print(e, e.support_value)
-        raise NotImplementedError("The -p option isn't supported yet, sorry.")
+        # Working with real long read data
+        print('Using input BAM file to compute edge support values.')
+        edge_support_values = use_pacbio_reads.read_pacbio_bam(pacbio_bam,
+                                                               bp_edges_list)
     else:
-        edge_support_values = []
-        for i in range(len(bp_edges_list)):
+        print('Simulating edge support values using normal dist. with '
+              'mean = {}, std. dev. = {}.'.format(simulated_mean,
+                                                  simulated_std_dev))
+        # Working with simulated edge support values
+        num_edges = len(bp_edges_list)
+        raw_simulated_support_values = numpy.random.normal(
+            loc=simulated_mean, scale=simulated_std_dev, size=num_edges
+        )
+        sv_iterator = iter(raw_simulated_support_values)
+        for e in bp_edges_list:
             # The max(..., 0) is just a way of saying: if this edge gets
             # assigned a support value of <= 0, just set it to 0.
-            v = max(round(numpy.random.normal(
-                loc=simulated_mean, scale=simulated_std_dev
-            )), 0)
-            edge_support_values.append(v)
+            edge_support_values[e] = max(round(next(sv_iterator)), 0)
+
+    # Scale edge support values to maximum, if needed
+    obs_max = max(edge_support_values.values())
+    if obs_max > max_support_value:
+        print("Observed a maximum edge support value of {}.".format(obs_max))
+        print("Scaling edge support values to a maximum value of {}.".format(
+            max_support_value
+        ))
+        for e in edge_support_values:
+            if edge_support_values[e] > 0:
+                # This is just "min-max scaling" as defined in
+                # http://rasbt.github.io/mlxtend/user_guide/preprocessing/minmax_scaling/
+                # (We use a observed min of 0)
+                e_sc = max_support_value * (edge_support_values[e] / obs_max)
+                edge_support_values[e] = round(e_sc)
 
     with open(fn3, 'w') as out_file:
         out_file.write(make_dot_graph(color_n=True, color_e=True,
@@ -458,6 +488,16 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
                                       split_edges=True))
     print('Graph with colorization, edge support, and splitting ({}) '
           'created.'.format(p4))
+
+    if draw_with_dot:
+        print('Converting each .gv file in the output directory to .png...')
+        for gv in [fn0, fn1, fn2, fn3, fn4]:
+            # Writing stdout to a file obj based on
+            # https://stackoverflow.com/a/4856684
+            png_fn = gv.replace(".gv", ".png")
+            with open(png_fn, 'w') as output_png_file:
+                subprocess.call(["dot", "-Tpng", gv], stdout=output_png_file)
+            print('Produced {}.'.format(png_fn))
 
 
 if __name__ == '__main__':
