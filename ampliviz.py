@@ -308,35 +308,19 @@ def convert_graph(input_graph: str, output_prefix: str, output_directory: str,
     #
     # Now, we have seq_edges, bp_edges, start_pos_to_node, and end_pos_to_node:
     # so we have the entire graph structure ready. We can convert this graph
-    # to DOT format.
-    #
-    # 0. Create a new seq edge for the source. (we can do this later -- for
-    # now ignoring source edges is totally ok imo)
-    #
-    # 1. Go through each bp edge. Using seq_edges, convert the bp edge to a
-    # connection between two nodes (based on the start and end
-    # coordinate, which -- based on the strand -- should match up to either
-    # the start or end of a node).
-    #
-    # 2. Create a DOT file. for a node, dot_repr() should be good BUT we'd
-    # want it to use the "size" (just take the log10 of size or something).
-    # for an edge, just get the node dot IDs and use those. Optionally can
-    # set weight/etc based on attrs but non essential.
-    #
-    # 3. at this point we can start messing with pacbio read mapping
+    # to DOT format and start doing fun stuff with it.
 
     # Assert that no GenomicPosition objects are used as both the start
     # node and end node of a BreakpointEdge
     n_shared = set(start_pos_to_node.keys()) & set(end_pos_to_node.keys())
     assert len(n_shared) == 0
-    # Assert that there's one start position and one end position for each
-    # node
+    # Assert that there's one start position and one end position for each node
     n_union = set(start_pos_to_node.keys()) | set(end_pos_to_node.keys())
     assert len(n_union) == 2 * len(seq_edges)
 
     for e in bp_edges:
         # NOTE: so the "tail" of an edge is actually its beginning. I uh
-        # definitely thought is was the other way around, which is why i
+        # definitely thought it was the other way around, which is why i
         # just spent a non-insignificant amount of time messing with dot
         # to get it to work
         if e.start_pos in start_pos_to_node:
