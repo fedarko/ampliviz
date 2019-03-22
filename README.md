@@ -125,7 +125,7 @@ This code is released under the [GNU General Public License (GPL), version 3](ht
 
 ## Acknowledgements
 
-Thanks to Jens Luebeck, Nam-Phuong Nguyen, Mehrdad Baktiari, and Prof. Bafna
+Thanks to Jens Luebeck, Nam-Phuong Nguyen, Mehrdad Bakhtiari, and Prof. Bafna
 for advice and help with getting started.
 
 This project relies on a number of Python libraries, including:
