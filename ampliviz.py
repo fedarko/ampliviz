@@ -265,7 +265,7 @@ class BreakpointEdge(object):
               "the alignment between PacBio long reads and the sequences in "
               "the breakpoint graph. If this is not passed, simulated edge "
               "support values will be generated and used.")
-@click.option("-msv", "--max-support-value", required=False, default=30,
+@click.option("-msv", "--max-support-value", required=False, default=20,
               type=int, help="Maximum accepted edge support value. If any "
               "edge support values (either real or simulated) exceed this "
               "value, then every edge support value will be scaled to have "
